@@ -1,21 +1,28 @@
-name: Build Executable
+name: Build & Auto-Release EXE
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write   # required to push tags + create releases
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
 jobs:
-  build:
+  build_release:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # needed to create/push tags reliably
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
@@ -25,35 +32,46 @@ jobs:
         shell: pwsh
         run: |
           python -m pip install --upgrade pip
-          if (Test-Path "requirements.txt") {
-            python -m pip install -r requirements.txt
-          } else {
-            Write-Host "requirements.txt not found - skipping"
-          }
+          if (Test-Path "requirements.txt") { python -m pip install -r requirements.txt }
           python -m pip install pyinstaller
 
-      - name: Debug - list repo files
-        shell: pwsh
-        run: |
-          Write-Host "Repo root files:"
-          Get-ChildItem -Force
-          Write-Host "`nLooking for overlay_app_locker.py:"
-          Get-ChildItem -Recurse -Filter "overlay_app_locker.py" | Select-Object FullName
-
-      - name: Build with PyInstaller
+      - name: Build EXE
         shell: pwsh
         run: |
           pyinstaller --noconsole --onefile --name "OverlayAppLocker" overlay_app_locker.py
 
-      - name: Debug - list dist outputs
+      # Auto version: v1.0.<run_number>
+      - name: Set version
+        id: ver
         shell: pwsh
         run: |
-          Write-Host "Contents of dist/:"
-          if (Test-Path "dist") { Get-ChildItem -Recurse "dist" } else { Write-Host "dist folder not found" }
+          $version = "v1.0.${{ github.run_number }}"
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Version: $version"
 
-      - name: Upload Executable Artifact
-        uses: actions/upload-artifact@v4
+      - name: Create and push tag
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          $tag = "${{ steps.ver.outputs.version }}"
+
+          # If tag already exists remotely, skip tagging (prevents failures on reruns)
+          git fetch --tags
+          $exists = git tag -l $tag
+          if ($exists) {
+            Write-Host "Tag $tag already exists. Skipping tag creation."
+          } else {
+            git tag $tag
+            git push origin $tag
+          }
+
+      - name: Create GitHub Release and upload EXE
+        uses: softprops/action-gh-release@v2
         with:
-          name: OverlayAppLocker-Executable
-          path: dist/**
-          if-no-files-found: error
+          tag_name: ${{ steps.ver.outputs.version }}
+          name: ${{ steps.ver.outputs.version }}
+          generate_release_notes: true
+          files: |
+            dist/OverlayAppLocker.exe
