@@ -20,7 +20,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # needed to create/push tags reliably
+          fetch-depth: 0  
 
       - name: Setup Python
         uses: actions/setup-python@v5
