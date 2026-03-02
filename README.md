@@ -27,6 +27,17 @@ A professional background security tool for Windows 11 that monitors running app
    python overlay_app_locker.py
    ```
 
+### Screen Snips
+<img width="910" height="540" alt="Image" src="https://github.com/user-attachments/assets/36322be4-dd21-44b5-9867-caf211399a40" />
+
+<img width="807" height="366" alt="Image" src="https://github.com/user-attachments/assets/a2ba0fed-91b8-44e9-92c7-17cbb9f775ae" />
+
+<img width="864" height="1022" alt="Image" src="https://github.com/user-attachments/assets/18d4c9e5-f8ea-4307-8545-ebc2ee019fe6" />
+
+<img width="1912" height="1075" alt="Image" src="https://github.com/user-attachments/assets/61ea3ed9-0e5e-4187-a868-81d7e92fd228" />
+
+<img width="1919" height="1079" alt="Image" src="https://github.com/user-attachments/assets/4beb91fe-b252-429a-b594-36d771c14f66" />
+
 ## Usage
 1. **Launch**: Run `overlay_app_locker.py`. The app will appear in your system tray.
 2. **Add Apps**: Open the Dashboard from the tray, click "Add New Application", and select the app you want to protect.
